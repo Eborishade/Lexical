@@ -19,6 +19,9 @@ private:
     map<string, string> tokenmap; // valid lexeme/token pairs
     // other private methods
 
+    bool lineParse(string);//calls addOutput to populate output file
+    void addOutput(string);
+
 public:
     LexAnalyzer(istream& infile);
     /*  -pre: parameter refers to open data file consisting of token and lexeme pairs
@@ -26,7 +29,7 @@ public:
         
         -post: tokenmap has been populated    */
 
-    void scanFile(istream& infile, ostream& outfile);
+    void scanFile(istream& infile, ostream& outfile){
     /*  -pre: 1 st parameter refers to an open text file that contains source
          code in the language, 2 nd parameter refers to an open empty output file
 
@@ -35,5 +38,24 @@ public:
          the incomplete token/lexeme pairs, as well as an error message have
          written to the output file. A success or fail message has printed to the console.
     */
+        string value;
+        bool errorOccured = false;
+
+        infile >> value;
+        while (!infile.eof()){//will end before last line is parsed
+            errorOccured = lineParse(value);
+            infile >> value;
+        }
+        errorOccured = lineParse(value); //parse final line of file
+        if (errorOccured){
+            cout << "Error occured: Error in file. terminating..." << endl;
+            cout << "File not Processed completely. Program fail." << endl;
+
+        } else {
+            cout << "File Processed. Program Sucessful." << endl;
+
+        }
+
+    }
 
 };
