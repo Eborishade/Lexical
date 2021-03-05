@@ -21,12 +21,30 @@ private:
 
     // other private methods
    
-    bool lineParse(string);
-    bool lineParse(istream& infile, string);
+    bool lineParse(string line){}
+
+    bool lineParse(istream& infile, string line){
     //calls addOutput to populate output file
     //takes istream as param in case statement spans multiple lines
-     // and two lines need to be evaluated at once
-    void addOutput(string);
+        char ch = line[0];
+        string focus(1, ch);
+        cout << "focus: " << focus <<endl;
+
+        for (int i = 0; i < line.length(); i++){
+            if(tokenmap.find(focus) != tokenmap.end()){
+                
+            }
+        }
+
+
+
+    }
+    
+
+
+    void addOutput(ostream& outfile, string output){
+        outfile << output;
+    }
 
 
 public:
@@ -34,9 +52,12 @@ public:
     /*  -pre: parameter refers to open data file consisting of token and lexeme pairs
          i.e. s_and and t_begin begin t_int 27. Each pair appears on its own input line.
         
-        -post: tokenmap has been populated    */
+        -post: tokenmap has been populated 
+    */
+        
+        string one, two;
+        //infile >> one >> two; //read file line: << a << b; map[a] = b
 
-        //read file line: << a << b; map[a] = b
 
 
     void scanFile(istream& infile, ostream& outfile){
@@ -69,3 +90,11 @@ public:
     }
 
 };
+
+
+
+int main(){
+
+
+    return 0;
+}
