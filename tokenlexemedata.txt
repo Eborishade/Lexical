@@ -30,4 +30,3 @@ s_mod %
 s_and &&
 s_or ||
 s_not !
- 
