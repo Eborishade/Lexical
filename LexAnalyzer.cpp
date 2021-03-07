@@ -47,6 +47,21 @@ class LexAnalyzer{
         }
 
 
+        void delSpaces(string& str){
+            //post: removes repeated spaces from string if there are any
+            // leaves any trailing spaces at end of string
+           int i = 0;
+
+           while (i < str.length()-1){
+                if (i > 0 && str[i-1] == ' ' && str[i] == ' '){
+                    str.erase(i, 1); 
+                    i--;
+                }
+                i++;
+            }
+        }
+
+
         bool lineParse(istream& infile, string line, ostream& outfile){
         /* -pre: 1st param refers to open file, string is a line from infile
            -post: calls addOutput to populate output file
@@ -112,14 +127,14 @@ class LexAnalyzer{
                         pos++;
 
                         //if line ends, read in new line.
-                        if (pos == line.length()){
+                        if (pos >= line.length()){
                             getline(infile, line);
 
                             if (!infile.eof()){
                                 pos = 0; 
                             } else {
                                 error = true;
-                                error_message = "Error: String_Not_Delimited_Overflow. End of file reached with open string.\n" +build;
+                                error_message = "Error: String_Not_Delimited_Overflow. End of file reached with open string.";
                                 addOutput(outfile, error_message);
                             }
                         }
@@ -133,6 +148,7 @@ class LexAnalyzer{
                     //output
                     if (!error){
                         output = "t_str : " + build;
+                        delSpaces(output);
                         addOutput(outfile, output);
                     }
 
