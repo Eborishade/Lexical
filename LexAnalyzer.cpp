@@ -145,20 +145,69 @@ class LexAnalyzer{
 
                 //SYMBOL: ,==44 (==40  )==41  ;==59 ascii
                 }else if (ascii == ',' || ascii == '(' || ascii == ')' || ascii == ';'){
+                    build = ch;
+                    output = tokenmap[build] + " : " + ch;
+                    addOutput(outfile, output);
 
 
                 //ASSIGNMENT or RELATIONAL OP: <==60  ===61 >==62 !==33
-                }else if (ascii == '<' || ascii == '>' || ascii == '=' || ascii == '!'){
+                }else if (ascii == '<' || ascii == '>' || ascii == '=' || ascii == '!'){                    
+                    pos++;
 
+                    if (pos < line.length()){
+                        if (line[pos-1] == '<' && line[pos] == '='){
+                            output = tokenmap["<="] + " : <=";
+                            addOutput(outfile, output);
+
+                        } else if (line[pos-1] == '>' && line[pos] == '='){
+                            output = tokenmap[">="] + " : >=";
+                            addOutput(outfile, output);
+
+                        } else if (line[pos-1] == '=' && line[pos] == '='){
+                            output = tokenmap["=="] + " : ==";
+                            addOutput(outfile, output);
+
+                        } else if (line[pos-1] == '!' && line[pos] == '='){
+                            output = tokenmap["!="] + " : !=";
+                            addOutput(outfile, output);
+
+                        } else {
+                            pos--;
+                            build = ch;
+                            output = tokenmap[build] + " : " + ch;
+                            addOutput(outfile, output);
+                        }
+                    }
 
 
                 //ARITHMETIC OP: %==37 *==42 +==43 -==45 /==47
                 }else if ( ascii == '%' || ascii == '*' || ascii == '+' || ascii == '-' || ascii == '/'){
+                    build = ch;
+                    output = tokenmap[build] + " : " + ch;
+                    addOutput(outfile, output);
 
 
                 //LOGICAL OP
-                }else if (ascii == '&'){
+                }else if (ascii == '&' || ascii == '|'){
+                    //Make sure second char is same as first 
+                    pos++;
 
+                    if (pos <line.length()){
+                        if (line[pos-1] == '&' && line[pos] == '&'){
+                            output = tokenmap["&&"] + " : &&";
+                            addOutput(outfile, output);
+
+                        } else if (line[pos-1] == '|' && line[pos] == '|'){
+                            output = tokenmap["||"] + " : ||";
+                            addOutput(outfile, output);
+
+                        } else {
+                            error = true;
+                            error_message = "Undefined Logic Operator reached";
+                            addOutput(outfile, error_message);
+                        }
+                        
+                    }
 
                 
                 //OTHER
