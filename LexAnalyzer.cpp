@@ -18,73 +18,191 @@ class LexAnalyzer{
         vector<string> tokens;// source code file tokens
         map<string, string> tokenmap; // valid lexeme/token pairs
         //symbols must be delimited by space, whitespace, id, int, or other symbol.
+        vector<string> delimiters;
+        string error_message;
 
 
         // other private methods
     
-        bool lineParse(string line){}
+        bool isADelimiter(char c){
+        //post: returns whether char exists in list of delimiters
+            string s(1, c);
 
-        bool lineParse(istream& infile, string line){
+            if (find(delimiters, s) != -1){
+                return true;
+            }
+            return false;
+        }
+
+
+        int find(vector<string>& v, string val){
+        //pre: 2nd param is a string that exists in vector
+        //post: returns location of val; returns -1 if not found
+            for (int i =0; i < v.size(); i++){
+                if (v[i] == val){
+                    return i;
+                }
+            }
+            return -1; //not found
+        }
+
+
+        bool lineParse(istream& infile, string line, ostream& outfile){
         /* -pre: 1st param refers to open file, string is a line from infile
            -post: calls addOutput to populate output file
            -note: 1st param is in case statement spans multiple lines
         */   
+            bool error = false;
+            string output;//string to be added to output file
+            string build;//will keep track of not-yet delimited elements
+            int pos = 0; //will track position in line
+            char ch = line[pos];//will keep track of char to be analyzed
+            int ascii = int(ch);//ascii version of current char
 
-            int pos = 0;
-            char ch = line[pos];//focus on first character in line
-            int ascii = int(ch);
             cout << "ch: " << ch <<endl;
             cout << "ascii: " << ascii <<endl;
 
-            while(pos < line.length()){
+            while(pos < line.length() && !error){
                 ch = line[pos];
                 ascii = int(ch);
+                build = "";
+                output = "";
+
                 //********<testing>*************
                 cout << "ch: " << ch <<endl;
                 cout << "ascii: " << ascii <<endl;
                 //********</testing>*************
 
-
+                //SPACE
                 if (ascii == 32){//space:  == 32 ascii
-                    //do nothing, move on OR DELIMITER, END PREV
-                    pos++;
+                    //do nothing, move on.
 
 
-                } else if(ch >= '0' && ch <= '9' ){//number
+                //NUMBERS
+                } else if(ch >= '0' && ch <= '9' ){
                     //until delimiter reached, add all chars to string
                     //test string as int, else error
 
+                    while (ch >= '0' && ch <= '9' && pos < line.length()){
+                        ch = line[pos];
+                        ascii = int(ch);
+                        if(ch >= '0' && ch <= '9'){
+                            build+= ch;
+                            pos++;
+                        }
+                    }//will end when ch no longer equals a number. build will be string filled with numbers.
                     
+                    if (isADelimiter(ch)){//success, print to outfile
+                        int newint = stoi(build);
+                        output = "t_int : " + newint;
 
-                }else if (ascii == '"'){//string: "== 34 ascii
+                        addOutput(outfile, output);
+                        pos--; //allows delimiter to be futher analyzed later...
+
+                    } else {//if last space is NOT a delimeter, THROW ERROR
+                        error = true;
+                        error_message = "Error: Integer_Not_Delimited_Overflow.";
+                        addOutput(outfile, error_message);
+                    }
+
+  
+                //STRING: "== 34 ascii
+                }else if (ascii == '"'){
                     //may cause reading multiple lines
                     //until delimiter reached, add all chars to string
                     //test string as id or keyword, else error
+                    pos++;
+                    ch = line[pos];
+                    ascii = int(ch);
+
+                    while (ch != '"' && !error){
+                        build+=ch;
+                        pos++;
+
+                        //if line ends, read in new line.
+                        if (pos = line.length()){
+                            infile >> line;
+                            if (!infile.eof()){
+                                pos = 0; 
+                            } else {
+                                error = true;
+                                error_message = "Error: String_Not_Delimited_Overflow. End of file reached with open string.";
+                                addOutput(outfile, error_message);
+                            }
+                        }
+
+                        if (!error){
+                            ch = line[pos];
+                            ascii = int(ch);
+                        }
+                    }
+                    //output
+                    if (!error){
+                        output = "t_str : " + build;
+                        addOutput(outfile, output);
+                    }
+
+
+                //SYMBOL: ,==44 (==40  )==41  ;==59 ascii
+                }else if (ascii == ',' || ascii == '(' || ascii == ')' || ascii == ';'){
+
+
+                //ASSIGNMENT or RELATIONAL OP: <==60  ===61 >==62 !==33
+                }else if (ascii == '<' || ascii == '>' || ascii == '=' || ascii == '!'){
+
+
+
+                //ARITHMETIC OP: %==37 *==42 +==43 -==45 /==47
+                }else if ( ascii == '%' || ascii == '*' || ascii == '+' || ascii == '-' || ascii == '/'){
+
+
+                //LOGICAL OP
+                }else if (ascii == '&'){
+
+
+                
+                //OTHER
+                } else {
+                    /*it must be an identifier, keyword or error.
+                     until delimiter reached, add all chars to string, 
+                     test string as id or keyword, else error
+                    */
+                    while (!isADelimiter(ch) && pos < line.length()){
+                        build+= ch;
+
+                        pos++;
+                        if (pos < line.length()){
+                            ch = line[pos];
+                            ascii = int(ch);                            
+                        }
+                    }
                     
-
-                }else if (ascii == ',' || ascii == '(' || ascii == ')' || ascii == ';'){//symbol: ,==44 (==40  )==41  ;==59 ascii
-
-
-                }else if ((ascii >= 60 && ascii <=62) || ascii == '!'){//relational op: <==60  ===61 >==62 !==33
-
-
-                }else if ( ascii == '%' || ascii == '*' || ascii == '+' || ascii == '-' || ascii == '/'){//arithmetic op: %==37 *==42 +==43 -==45 /==47
-
-
-                }else if (ascii == '&'){//logical op
-
-
-                } else {//it must be an identifier, keyword or error.
-                    //until delimiter reached, add all chars to string
-                    //test string as id or keyword, else error
+                    //is key?
+                    if (tokenmap.find(build) != tokenmap.end()){
+                            output = tokenmap[build] + ": " + build;
+                    //is id? or invalid?
+                    } else {
+                        for (int i = 0; i < build.length(); i++){
+                            //if it contains anything but letters & numbers, not id
+                            if ( !((build[i] >= '0' && build[i] <= '9') || (build[i] >= 'A' && build[i] <= 'Z') || (build[i] >= 'a' && build[i] <= 'z')) ){
+                                error = true;
+                                error_message = "Error: Undefined value reached.";
+                                addOutput(outfile, error_message);
+                            }
+                        }
+                        if (!error){
+                            output = "t_id : " + build;
+                            addOutput(outfile, output);
+                        }
+                    }
 
                 }
+                //END ANALYSIS, loop again
 
-                pos++;//???? may create error/skip; WATCH
+                pos++;
             }
 
-
-
+            return error;
         }
         
 
@@ -105,6 +223,7 @@ class LexAnalyzer{
 
             string token, lexeme;
             infile >> token >> lexeme; //read file line: << a << b; map[a] = b
+            delimiters.push_back(" ");//space is a delimiter
 
             while (!infile.eof()){              
                 tokenmap[lexeme] = token;//inserted 'backwards' so that 'and' returns lexeme s_and
@@ -113,6 +232,11 @@ class LexAnalyzer{
                 lexemes.push_back(lexeme);
 
                 infile >> token >> lexeme; //read file line: << a << b; map[a] = b
+
+                if (token[0] == 's'){//all symbols are delimeters
+                    delimiters.push_back(lexeme);
+                }
+
             }
         }
 
@@ -132,7 +256,7 @@ class LexAnalyzer{
 
             scfile >> line;
             while (!scfile.eof() && !errorOccured){//will end before last line is parsed unless empty newline present
-                errorOccured = lineParse(scfile, line);
+                errorOccured = lineParse(scfile, line, outfile);
                 scfile >> line;
             }
 
