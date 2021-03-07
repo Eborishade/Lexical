@@ -59,19 +59,12 @@ class LexAnalyzer{
             char ch = line[pos];//will keep track of char to be analyzed
             int ascii = int(ch);//ascii version of current char
 
-            cout << "ch: " << ch <<endl;
-            cout << "ascii: " << ascii <<endl;
 
             while(pos < line.length() && !error){
                 ch = line[pos];
                 ascii = int(ch);
                 build = "";
                 output = "";
-
-                //********<testing>*************
-                cout << "ch: " << ch <<endl;
-                cout << "ascii: " << ascii <<endl;
-                //********</testing>*************
 
                 //SPACE
                 if (ascii == 32){//space:  == 32 ascii
@@ -116,21 +109,23 @@ class LexAnalyzer{
                     ascii = int(ch);
 
                     while (ch != '"' && !error){
-                        build+=ch;
+                        build += ch;
                         pos++;
 
                         //if line ends, read in new line.
-                        if (pos = line.length()){
-                            infile >> line;
+                        if (pos == line.length()){
+                            getline(infile, line);
+
                             if (!infile.eof()){
                                 pos = 0; 
                             } else {
                                 error = true;
-                                error_message = "Error: String_Not_Delimited_Overflow. End of file reached with open string.";
+                                error_message = "Error: String_Not_Delimited_Overflow. End of file reached with open string.\n" +build;
                                 addOutput(outfile, error_message);
                             }
                         }
-
+                        
+                        //set ch to new position, account for spaces
                         if (!error){
                             ch = line[pos];
                             ascii = int(ch);
@@ -225,23 +220,30 @@ class LexAnalyzer{
                             ascii = int(ch);                            
                         }
                     }
-                    
+                    pos--;//so delimiter can be analyzed later...
+
                     //is key?
                     if (tokenmap.find(build) != tokenmap.end()){
                             output = tokenmap[build] + ": " + build;
+                            addOutput(outfile, output);
+                   
                     //is id? or invalid?
                     } else {
-                        for (int i = 0; i < build.length(); i++){
+
+                        int i = 0;
+                        while (i < build.length() && !error){
                             //if it contains anything but letters & numbers, not id
                             if ( !((build[i] >= '0' && build[i] <= '9') || (build[i] >= 'A' && build[i] <= 'Z') || (build[i] >= 'a' && build[i] <= 'z')) ){
                                 error = true;
                                 error_message = "Error: Undefined value reached.";
                                 addOutput(outfile, error_message);
                             }
+                            i++;
                         }
                         if (!error){
                             output = "t_id : " + build;
                             addOutput(outfile, output);
+
                         }
                     }
 
@@ -253,11 +255,10 @@ class LexAnalyzer{
 
             return error;
         }
-        
 
 
         void addOutput(ostream& outfile, string output){
-            outfile << output;
+            outfile << output << endl;
         }
 
 
@@ -303,10 +304,10 @@ class LexAnalyzer{
             string line;
             bool errorOccured = false;
 
-            scfile >> line;
+            getline(scfile, line);
             while (!scfile.eof() && !errorOccured){//will end before last line is parsed unless empty newline present
                 errorOccured = lineParse(scfile, line, outfile);
-                scfile >> line;
+                getline(scfile, line);
             }
 
             if (errorOccured){
@@ -323,6 +324,48 @@ class LexAnalyzer{
 
 
 int main(){
+    string source = "tokenlexemedata.txt";
+    string codefile;
+    string outputfile; 
+
+
+    //setup source file
+
+    ifstream sourcefile (source);  
+      if (!sourcefile){
+        cout << "error opening source file" << endl;
+        exit(-1);
+    }
+
+    //setup code input file
+
+    cout << "Enter Input File >> "; 
+    cin >> codefile;
+
+    ifstream inFile (codefile);
+    if (!inFile){
+        cout << "error opening code input file" << endl;
+        exit(-1);
+    }
+
+    //setup output input file
+
+    cout << "Enter Output File >> "; 
+    cin >> outputfile;
+    
+    ofstream outFile (outputfile);
+    if (!outFile){
+        cout << "error opening output file" << endl;
+        exit(-1);
+    }
+
+
+    LexAnalyzer lex(sourcefile);
+    lex.scanFile(inFile, outFile);
+
+    sourcefile.close();
+    inFile.close();
+    outFile.close();
 
 
     return 0;
