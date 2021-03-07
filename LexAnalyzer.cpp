@@ -75,7 +75,7 @@ class LexAnalyzer{
                 } else if(ch >= '0' && ch <= '9' ){
                     //until delimiter reached, add all chars to string
                     //test string as int, else error
-
+                    
                     while (ch >= '0' && ch <= '9' && pos < line.length()){
                         ch = line[pos];
                         ascii = int(ch);
@@ -87,8 +87,7 @@ class LexAnalyzer{
                     
                     if (isADelimiter(ch)){//success, print to outfile
                         int newint = stoi(build);
-                        output = "t_int : " + newint;
-
+                        output = "t_int : " + to_string(newint);
                         addOutput(outfile, output);
                         pos--; //allows delimiter to be futher analyzed later...
 
