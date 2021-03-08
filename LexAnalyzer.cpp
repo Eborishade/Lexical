@@ -24,7 +24,7 @@ class LexAnalyzer{
 
         // other private methods
     
-        bool isADelimiter(char c){
+        bool isADelimiter(char& c){
         //post: returns whether char exists in list of delimiters
             string s(1, c);
 
@@ -35,7 +35,7 @@ class LexAnalyzer{
         }
 
 
-        int find(vector<string>& v, string val){
+        int find(vector<string>& v, string& val){
         //pre: 2nd param is a string that exists in vector
         //post: returns location of val; returns -1 if not found
             for (int i =0; i < v.size(); i++){
@@ -113,7 +113,7 @@ class LexAnalyzer{
                     }
 
   
-                //STRING: "== 34 ascii
+                //STRING:: "== 34 ascii
                 }else if (ascii == '"'){
                     //may cause reading multiple lines
                     //until delimiter reached, add all chars to string
@@ -153,73 +153,41 @@ class LexAnalyzer{
                     }
 
 
-                //SYMBOL: ,==44 (==40  )==41  ;==59 ascii
-                }else if (ascii == ',' || ascii == '(' || ascii == ')' || ascii == ';'){
-                    build = ch;
-                    output = tokenmap[build] + " : " + ch;
-                    addOutput(outfile, output);
-
-
-                //ASSIGNMENT or RELATIONAL OP: <==60  ===61 >==62 !==33
-                }else if (ascii == '<' || ascii == '>' || ascii == '=' || ascii == '!'){                    
+                /* DELMITERS:: = , ( ) ; < <= > >= == != + - * / % && || !  So... */ 
+                } else if (isADelimiter(ch)){
                     pos++;
+                    bool twochar = false;//tracks whether item is 2char delim or 1char delim
 
+                    //first check 2 char-length  delimiters
                     if (pos < line.length()){
-                        if (line[pos-1] == '<' && line[pos] == '='){
-                            output = tokenmap["<="] + " : <=";
-                            addOutput(outfile, output);
-
-                        } else if (line[pos-1] == '>' && line[pos] == '='){
-                            output = tokenmap[">="] + " : >=";
-                            addOutput(outfile, output);
-
-                        } else if (line[pos-1] == '=' && line[pos] == '='){
-                            output = tokenmap["=="] + " : ==";
-                            addOutput(outfile, output);
-
-                        } else if (line[pos-1] == '!' && line[pos] == '='){
-                            output = tokenmap["!="] + " : !=";
-                            addOutput(outfile, output);
-
-                        } else {
-                            pos--;
-                            build = ch;
-                            output = tokenmap[build] + " : " + ch;
-                            addOutput(outfile, output);
-                        }
-                    }
-
-
-                //ARITHMETIC OP: %==37 *==42 +==43 -==45 /==47
-                }else if ( ascii == '%' || ascii == '*' || ascii == '+' || ascii == '-' || ascii == '/'){
-                    build = ch;
-                    output = tokenmap[build] + " : " + ch;
-                    addOutput(outfile, output);
-
-
-                //LOGICAL OP
-                }else if (ascii == '&' || ascii == '|'){
-                    //Make sure second char is same as first 
-                    pos++;
-
-                    if (pos <line.length()){
-                        if (line[pos-1] == '&' && line[pos] == '&'){
-                            output = tokenmap["&&"] + " : &&";
-                            addOutput(outfile, output);
-
-                        } else if (line[pos-1] == '|' && line[pos] == '|'){
-                            output = tokenmap["||"] + " : ||";
-                            addOutput(outfile, output);
-
-                        } else {
-                            error = true;
-                            error_message = "Undefined Logic Operator reached";
-                            addOutput(outfile, error_message);
-                        }
+                        build += ch;
+                        build += line[pos];
                         
+                        //look for in token map, else not delimiter.
+                        if (tokenmap.find(build) != tokenmap.end()){
+                            output = tokenmap[build] + ": " + build;
+                            addOutput(outfile, output);
+                            twochar = true;      
+                        } 
+                    //KEEP PROGRESSION (pos++) to prevent double analysis
+                    } 
+
+                    //else check 1 char-length delimiters
+                    if (!twochar){
+                        build = ch;
+                        pos--; //undo original progression for later analysis...
+
+                        if (tokenmap.find(build) != tokenmap.end()){
+                            output = tokenmap[build] + ": " + build;
+                            addOutput(outfile, output);
+
+                        } else {//should not be reachable...
+                                error = true;
+                                error_message = "Error<catastrophic>: Unknown_Delimiter_Reached! ["+build+"]";
+                                addOutput(outfile, error_message);
+                            }
                     }
 
-                
                 //OTHER
                 } else {
                     /*it must be an identifier, keyword or error.
@@ -250,7 +218,7 @@ class LexAnalyzer{
                             //if it contains anything but letters & numbers then invalid
                             if ( !((build[i] >= '0' && build[i] <= '9') || (build[i] >= 'A' && build[i] <= 'Z') || (build[i] >= 'a' && build[i] <= 'z')) ){
                                 error = true;
-                                error_message = "Error: Undefined value reached.";
+                                error_message = "Error: Illegal_Argument_Reached. ["+build+"]";
                                 addOutput(outfile, error_message);
                             }
                             i++;
