@@ -68,7 +68,6 @@ class LexAnalyzer{
            -note: 1st param is in case statement spans multiple lines
         */   
             bool error = false;
-            string output;//string to be added to output file
             string build;//will keep track of not-yet delimited elements
             int pos = 0; //will track position in line
             char ch = line[pos];//will keep track of char to be analyzed
@@ -79,7 +78,6 @@ class LexAnalyzer{
                 ch = line[pos];
                 ascii = int(ch);
                 build = "";
-                output = "";
 
                 //SPACE
                 if (ascii == 32){//space:  == 32 ascii
@@ -102,14 +100,15 @@ class LexAnalyzer{
                     
                     if (isADelimiter(ch)){//success, print to outfile
                         int newint = stoi(build);
-                        output = "t_int : " + to_string(newint);
-                        addOutput(outfile, output);
+                        tokens.push_back(tokenmap["t_int"]);
+                        lexemes.push_back(to_string(newint));
+
                         pos--; //allows delimiter to be futher analyzed later...
 
                     } else {//if last space is NOT a delimeter, THROW ERROR
                         error = true;
-                        error_message = "Error: Integer_Not_Delimited_Overflow.";
-                        addOutput(outfile, error_message);
+                        tokens.push_back(tokenmap["t_int"]);
+                        lexemes.push_back("Error: Integer_Not_Delimited_Overflow.");
                     }
 
   
@@ -134,8 +133,8 @@ class LexAnalyzer{
                                 pos = 0; 
                             } else {
                                 error = true;
-                                error_message = "Error: String_Not_Delimited_Overflow. End of file reached with open string.";
-                                addOutput(outfile, error_message);
+                                tokens.push_back(tokenmap["t_str"]);
+                                lexemes.push_back("Error: String_Not_Delimited_Overflow. End of file reached with open string.");
                             }
                         }
                         
@@ -147,9 +146,9 @@ class LexAnalyzer{
                     }
                     //output
                     if (!error){
-                        output = "t_str : " + build;
-                        delSpaces(output);
-                        addOutput(outfile, output);
+                        delSpaces(build);
+                        tokens.push_back(tokenmap["t_str"]);
+                        lexemes.push_back(build);
                     }
 
 
@@ -165,8 +164,8 @@ class LexAnalyzer{
                         
                         //look for in token map, else not delimiter.
                         if (tokenmap.find(build) != tokenmap.end()){
-                            output = tokenmap[build] + ": " + build;
-                            addOutput(outfile, output);
+                            tokens.push_back(tokenmap[build]);
+                            lexemes.push_back(build);
                             twochar = true;      
                         } 
                     //KEEP PROGRESSION (pos++) to prevent double analysis
@@ -178,13 +177,13 @@ class LexAnalyzer{
                         pos--; //undo original progression for later analysis...
 
                         if (tokenmap.find(build) != tokenmap.end()){
-                            output = tokenmap[build] + ": " + build;
-                            addOutput(outfile, output);
+                            tokens.push_back(tokenmap[build]);
+                            lexemes.push_back(build);
 
                         } else {//should not be reachable...
                                 error = true;
-                                error_message = "Error<catastrophic>: Unknown_Delimiter_Reached! ["+build+"]";
-                                addOutput(outfile, error_message);
+                                tokens.push_back(build);
+                                lexemes.push_back("Error<catastrophic>: Unknown_Delimiter_Reached!");
                             }
                     }
 
@@ -207,8 +206,8 @@ class LexAnalyzer{
 
                     //is key
                     if (tokenmap.find(build) != tokenmap.end()){
-                            output = tokenmap[build] + ": " + build;
-                            addOutput(outfile, output);
+                            tokens.push_back(tokenmap[build]);
+                            lexemes.push_back(build);
                    
                     //is id or invalid
                     } else {
@@ -218,16 +217,15 @@ class LexAnalyzer{
                             //if it contains anything but letters & numbers then invalid
                             if ( !((build[i] >= '0' && build[i] <= '9') || (build[i] >= 'A' && build[i] <= 'Z') || (build[i] >= 'a' && build[i] <= 'z')) ){
                                 error = true;
-                                error_message = "Error: Illegal_Argument_Reached. ["+build+"]";
-                                addOutput(outfile, error_message);
+                                tokens.push_back("Null");
+                                lexemes.push_back("Error: Illegal_Argument_Reached. ["+build+"]");
                             }
                             i++;
                         }
                         //is id
                         if (!error){
-                            output = "t_id : " + build;
-                            addOutput(outfile, output);
-
+                            tokens.push_back(tokenmap["t_id"]);
+                            lexemes.push_back(build);
                         }
                     }
                 }
@@ -239,9 +237,11 @@ class LexAnalyzer{
         }
 
 
-        void addOutput(ostream& outfile, string output){
-            //post: appends/creates outfile with new string 
-            outfile << output << endl;
+        void outprint(ostream& outfile){
+            //post: prints contents of token and lexeme vectors
+            for(int i = 0; i < tokens.size(); i++){
+                outfile << tokens[i] << " : " << lexemes[i] << endl;
+            }
         }
 
 
@@ -254,15 +254,16 @@ class LexAnalyzer{
             -post: tokenmap has been populated 
         */
 
-            string token, lexeme;
+            //token = s_and,  lexeme = and 
+            string token, lexeme; 
             infile >> token >> lexeme; //read file line: << a << b; map[a] = b
             delimiters.push_back(" ");//space is a delimiter
+            tokenmap["t_id"] = "t_id";
+            tokenmap["t_int"] = "t_int";
+            tokenmap["t_str"] = "t_str";
 
             while (!infile.eof()){              
                 tokenmap[lexeme] = token;//inserted 'backwards' so that 'and' returns lexeme s_and
-                
-                tokens.push_back(token);//WARN: NOT USED
-                lexemes.push_back(lexeme);//WARN: NOT USED
 
                 infile >> token >> lexeme; //read file line: << a << b; map[a] = b
 
@@ -293,6 +294,8 @@ class LexAnalyzer{
                 errorOccured = lineParse(scfile, line, outfile);
                 getline(scfile, line);
             }
+
+            outprint(outfile);
 
             if (errorOccured){
                 cout << "Error occured: Error in file. terminating..." << endl;
