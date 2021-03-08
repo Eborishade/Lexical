@@ -237,17 +237,17 @@ class LexAnalyzer{
                     }
                     pos--;//so delimiter can be analyzed later...
 
-                    //is key?
+                    //is key
                     if (tokenmap.find(build) != tokenmap.end()){
                             output = tokenmap[build] + ": " + build;
                             addOutput(outfile, output);
                    
-                    //is id? or invalid?
+                    //is id or invalid
                     } else {
 
                         int i = 0;
                         while (i < build.length() && !error){
-                            //if it contains anything but letters & numbers, not id
+                            //if it contains anything but letters & numbers then invalid
                             if ( !((build[i] >= '0' && build[i] <= '9') || (build[i] >= 'A' && build[i] <= 'Z') || (build[i] >= 'a' && build[i] <= 'z')) ){
                                 error = true;
                                 error_message = "Error: Undefined value reached.";
@@ -255,24 +255,24 @@ class LexAnalyzer{
                             }
                             i++;
                         }
+                        //is id
                         if (!error){
                             output = "t_id : " + build;
                             addOutput(outfile, output);
 
                         }
                     }
-
                 }
                 //END ANALYSIS, loop again
 
                 pos++;
             }
-
             return error;
         }
 
 
         void addOutput(ostream& outfile, string output){
+            //post: appends/creates outfile with new string 
             outfile << output << endl;
         }
 
@@ -293,8 +293,8 @@ class LexAnalyzer{
             while (!infile.eof()){              
                 tokenmap[lexeme] = token;//inserted 'backwards' so that 'and' returns lexeme s_and
                 
-                tokens.push_back(token);
-                lexemes.push_back(lexeme);
+                tokens.push_back(token);//WARN: NOT USED
+                lexemes.push_back(lexeme);//WARN: NOT USED
 
                 infile >> token >> lexeme; //read file line: << a << b; map[a] = b
 
@@ -320,7 +320,8 @@ class LexAnalyzer{
             bool errorOccured = false;
 
             getline(scfile, line);
-            while (!scfile.eof() && !errorOccured){//will end before last line is parsed unless empty newline present
+            while (!scfile.eof() && !errorOccured){
+            //note: will end before last line is parsed, unless empty new line present in file
                 errorOccured = lineParse(scfile, line, outfile);
                 getline(scfile, line);
             }
@@ -367,16 +368,15 @@ int main(){
 
     cout << "Enter Output File >> "; 
     cin >> outputfile;
-    
-    ofstream outFile (outputfile);
-    if (!outFile){
-        cout << "error opening output file" << endl;
-        exit(-1);
-    }
-
+    ofstream outFile (outputfile); //creates file if there is none found
+  
+    // LEX
 
     LexAnalyzer lex(sourcefile);
     lex.scanFile(inFile, outFile);
+
+
+    //close out
 
     sourcefile.close();
     inFile.close();
