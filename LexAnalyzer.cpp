@@ -19,7 +19,6 @@ class LexAnalyzer{
         map<string, string> tokenmap; // valid lexeme/token pairs
         //symbols must be delimited by space, whitespace, id, int, or other symbol.
         vector<string> delimiters;
-        string error_message;
 
 
         // other private methods
